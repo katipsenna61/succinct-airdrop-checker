@@ -1,0 +1,1 @@
+# succinct-airdrop-checker
