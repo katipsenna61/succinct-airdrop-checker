@@ -1,6 +1,6 @@
 export function calculateTokens(stars: number, proofs: number): number {
-  const STAR_REWARD = 0.3; // örnek katsayı
-  const PROOF_REWARD = 50; // örnek katsayı
+  const tokenPerStar = 75_000_000 / 259_640_385; // ≈ 0.2888
+  const tokenPerProof = 20_000_000 / 79_290;     // ≈ 252.27
 
-  return stars * STAR_REWARD + proofs * PROOF_REWARD;
+  return stars * tokenPerStar + proofs * tokenPerProof;
 }

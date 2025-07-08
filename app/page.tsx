@@ -1,106 +1,131 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { calculateTokens } from "../lib/calculateTokens";
-import { discordRoles } from "../lib/constants";
-import { motion } from "framer-motion";
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { calculateTokens } from '@/lib/calculateTokens';
+import { discordRoles } from '@/lib/constants';
 
 export default function Home() {
   const [stars, setStars] = useState(0);
   const [proofs, setProofs] = useState(0);
   const [stage25, setStage25] = useState(false);
+  const [kaitoRank, setKaitoRank] = useState<number | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [total, setTotal] = useState(0);
-  const [showResult, setShowResult] = useState(false);
+  const [total, setTotal] = useState<number | null>(null);
 
-  const handleCheckboxChange = (role: string) => {
+  const toggleRole = (value: string) => {
     setSelectedRoles((prev) =>
-      prev.includes(role)
-        ? prev.filter((r) => r !== role)
-        : [...prev, role]
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
 
+  const getKaitoReward = (rank: number | null) => {
+    if (!rank) return 0;
+    if (rank <= 10) return 500;
+    if (rank <= 50) return 300;
+    if (rank <= 100) return 200;
+    if (rank <= 250) return 125;
+    if (rank <= 500) return 80;
+    if (rank <= 750) return 40;
+    if (rank <= 1000) return 20;
+    return 0;
+  };
+
   const handleCalculate = () => {
-    const result = calculateTokens(stars, proofs, stage25, selectedRoles);
-    setTotal(result);
-    setShowResult(true);
+    let totalTokens = calculateTokens(stars, proofs);
+
+    if (stage25) totalTokens += 10000;
+
+    selectedRoles.forEach((roleValue) => {
+      const role = discordRoles.find((r) => r.value === roleValue);
+      if (role) totalTokens += role.tokens;
+    });
+
+    totalTokens += getKaitoReward(kaitoRank);
+    setTotal(totalTokens);
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-b from-slate-950 to-slate-900 text-white">
-      <div className="max-w-xl w-full bg-slate-800 rounded-2xl shadow-lg p-6 space-y-6">
-        <h1 className="text-3xl font-bold text-center">Succinct Airdrop Checker</h1>
+    <main className="min-h-screen flex flex-col items-center justify-center gap-6 p-6 bg-gradient-to-br from-slate-900 to-slate-700 text-white">
+      <h1 className="text-3xl font-bold">Succinct Airdrop Checker</h1>
 
-        <div className="space-y-2">
-          <label>⭐️ Stage 1 Stars</label>
+      <div className="flex flex-col gap-4 w-full max-w-md">
+
+        <label>
+          ⭐️ Stage 1 Stars
           <input
             type="number"
+            className="w-full mt-1 p-2 rounded bg-slate-800 border border-slate-600"
             value={stars}
             onChange={(e) => setStars(Number(e.target.value))}
-            className="w-full p-2 rounded bg-slate-700 text-white"
           />
+        </label>
 
-          <label>📜 Stage 2 Proofs</label>
+        <label>
+          🔍 Stage 2 Proofs
           <input
             type="number"
+            className="w-full mt-1 p-2 rounded bg-slate-800 border border-slate-600"
             value={proofs}
             onChange={(e) => setProofs(Number(e.target.value))}
-            className="w-full p-2 rounded bg-slate-700 text-white"
           />
-        </div>
+        </label>
 
-        <div className="space-y-2">
-          <label className="block text-lg mt-4">🎖 Discord Roles</label>
+        <div>
+          <p className="mb-2 font-semibold">💬 Discord Roles</p>
           <div className="grid grid-cols-2 gap-2">
             {discordRoles.map((role) => (
-              <label
-                key={role}
-                className={`flex items-center space-x-2 p-2 rounded border ${
-                  selectedRoles.includes(role)
-                    ? "bg-green-700 border-green-400"
-                    : "bg-slate-700 border-slate-600"
+              <button
+                key={role.value}
+                onClick={() => toggleRole(role.value)}
+                className={`p-2 rounded border text-left ${
+                  selectedRoles.includes(role.value)
+                    ? 'bg-green-600 border-green-400'
+                    : 'bg-slate-800 border-slate-600'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={selectedRoles.includes(role)}
-                  onChange={() => handleCheckboxChange(role)}
-                />
-                <span>{selectedRoles.includes(role) ? "✅" : "⬜"} {role}</span>
-              </label>
+                {selectedRoles.includes(role.value) ? '✅' : '⬜'} {role.label}
+              </button>
             ))}
           </div>
-
-          <label className="flex items-center space-x-2 mt-4">
-            <input
-              type="checkbox"
-              checked={stage25}
-              onChange={() => setStage25(!stage25)}
-            />
-            <span>🚀 Included in Stage 2.5</span>
-          </label>
         </div>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={stage25}
+            onChange={(e) => setStage25(e.target.checked)}
+          />
+          ✅ Included in Stage 2.5 (10,000 tokens)
+        </label>
+
+        <label>
+          🧠 Kaito Rank (1–1000)
+          <input
+            type="number"
+            className="w-full mt-1 p-2 rounded bg-slate-800 border border-slate-600"
+            value={kaitoRank ?? ''}
+            onChange={(e) => setKaitoRank(Number(e.target.value))}
+          />
+        </label>
 
         <button
           onClick={handleCalculate}
-          className="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition"
+          className="mt-4 p-2 bg-green-600 hover:bg-green-500 rounded text-white font-semibold"
         >
-          Calculate Airdrop
+          Calculate
         </button>
-
-        {showResult && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="text-center mt-4 text-xl font-semibold"
-          >
-            You’ll receive approximately: <br />
-            <span className="text-green-400 text-3xl">{total.toLocaleString()} $PROVE</span>
-          </motion.div>
-        )}
       </div>
+
+      {total !== null && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mt-6 p-4 bg-slate-800 rounded-lg shadow text-xl"
+        >
+          🎉 Estimated Airdrop: <strong>{total.toFixed(2)} $PROVE</strong>
+        </motion.div>
+      )}
     </main>
   );
 }
